@@ -189,10 +189,12 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
         </div>
 
         <div class="format-flow">
-          <div class="format-node">
-            <span>输入格式</span>
-            <strong>${Fn()}</strong>
-            <small>${C.length>0?`${C.length} 个文件`:"JSON / JSONL"}</small>
+          <div class="format-source">
+            <span class="format-label">输入格式</span>
+            <div class="format-node">
+              <strong>${Fn()}</strong>
+              <small>${C.length>0?`${C.length} 个文件`:"JSON / JSONL"}</small>
+            </div>
           </div>
           <span class="format-arrow"><i data-lucide="arrow-right-left" aria-hidden="true"></i></span>
           <fieldset class="field-group format-output">
