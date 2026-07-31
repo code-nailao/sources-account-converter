@@ -1406,6 +1406,9 @@ svg {
 
   .format-arrow {
     min-height: 28px;
+  }
+
+  .format-arrow svg {
     transform: rotate(90deg);
   }
 
