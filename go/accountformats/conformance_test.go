@@ -100,6 +100,31 @@ func TestGroupingForTwoHundredAccounts(t *testing.T) {
 	if got, want := groupSizes(byCount), []int{34, 34, 33, 33, 33, 33}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("part sizes = %v, want %v", got, want)
 	}
+
+	custom, err := Group(accounts, Grouping{Mode: GroupingCustomSizes, Sizes: []int{5, 10, 20, 30, 100}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := groupSizes(custom), []int{5, 10, 20, 30, 100, 35}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("custom sizes = %v, want %v", got, want)
+	}
+
+	clamped, err := Group(accounts[:12], Grouping{Mode: GroupingCustomSizes, Sizes: []int{5, 100, 20}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := groupSizes(clamped), []int{5, 7}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("clamped custom sizes = %v, want %v", got, want)
+	}
+}
+
+func TestGroupingRejectsInvalidCustomSizes(t *testing.T) {
+	accounts := make([]Account, 2)
+	for _, sizes := range [][]int{nil, {}, {1, 0}, {-1}} {
+		if _, err := Group(accounts, Grouping{Mode: GroupingCustomSizes, Sizes: sizes}); err == nil {
+			t.Fatalf("expected custom sizes %v to fail", sizes)
+		}
+	}
 }
 
 func TestFilenamesNeverContainIdentityData(t *testing.T) {

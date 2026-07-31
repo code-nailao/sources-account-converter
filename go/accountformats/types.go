@@ -12,15 +12,17 @@ const (
 type GroupingMode string
 
 const (
-	GroupingMerge     GroupingMode = "merge"
-	GroupingChunkSize GroupingMode = "chunkSize"
-	GroupingPartCount GroupingMode = "partCount"
+	GroupingMerge       GroupingMode = "merge"
+	GroupingChunkSize   GroupingMode = "chunkSize"
+	GroupingPartCount   GroupingMode = "partCount"
+	GroupingCustomSizes GroupingMode = "customSizes"
 )
 
 type Grouping struct {
 	Mode      GroupingMode `json:"mode"`
 	ChunkSize int          `json:"chunkSize,omitempty"`
 	PartCount int          `json:"partCount,omitempty"`
+	Sizes     []int        `json:"sizes,omitempty"`
 }
 
 type RenderOptions struct {

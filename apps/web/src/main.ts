@@ -1,5 +1,6 @@
 import {
-  BookOpen,
+  ArrowRightLeft,
+  Braces,
   Check,
   ChevronRight,
   Code2,
@@ -10,6 +11,7 @@ import {
   Github,
   Info,
   LockKeyhole,
+  Plus,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -31,6 +33,7 @@ import {
   formatFileSize,
   normalizeFormState,
   outputFilename,
+  previewCustomGrouping,
   toRenderOptions,
   type ConversionFormState,
 } from "./conversion";
@@ -59,7 +62,8 @@ let statusMessage = "等待添加文件";
 let statusKind: "neutral" | "success" | "error" = "neutral";
 
 const iconSet = {
-  BookOpen,
+  ArrowRightLeft,
+  Braces,
   Check,
   ChevronRight,
   Code2,
@@ -70,6 +74,7 @@ const iconSet = {
   Github,
   Info,
   LockKeyhole,
+  Plus,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -94,13 +99,20 @@ function navLink(route: Route, label: string, icon: string): string {
 
 function appShell(content: string): string {
   return `
-    <header class="app-header">
-      <div class="header-inner">
-        <a class="brand" href="#/convert" aria-label="Sources Account Converter 首页">
-          <span class="brand-mark"><i data-lucide="refresh-cw" aria-hidden="true"></i></span>
-          <span>Sources Account Converter</span>
-        </a>
-        <div class="header-actions">
+    <div class="workspace">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="sidebar-top">
+          <a class="brand" href="#/convert" aria-label="Sub2API / CPA 转换与分号器首页">
+            <span class="brand-mark"><i data-lucide="refresh-cw" aria-hidden="true"></i></span>
+            <span class="brand-copy"><strong>Sub2API / CPA</strong><small>转换与分号器</small></span>
+          </a>
+          <nav>
+            ${navLink("convert", "转换工具", "files")}
+            ${navLink("api", "API / SDK", "code-2")}
+            ${navLink("privacy", "隐私说明", "shield-check")}
+          </nav>
+        </div>
+        <div class="sidebar-footer">
           <div class="local-status">
             <span class="status-dot" aria-hidden="true"></span>
             本地处理
@@ -109,22 +121,13 @@ function appShell(content: string): string {
             <i data-lucide="github" aria-hidden="true"></i>
             开源仓库
           </a>
-        </div>
-      </div>
-    </header>
-    <div class="workspace">
-      <aside class="sidebar" aria-label="主导航">
-        <nav>
-          ${navLink("convert", "转换工具", "files")}
-          ${navLink("api", "API / SDK", "code-2")}
-          ${navLink("privacy", "隐私说明", "shield-check")}
-        </nav>
-        <div class="sidebar-note">
-          <i data-lucide="lock-keyhole" aria-hidden="true"></i>
-          <span>文件仅保留在当前页面内存</span>
+          <div class="sidebar-note">
+            <i data-lucide="lock-keyhole" aria-hidden="true"></i>
+            <span>文件仅在当前页面内存中处理</span>
+          </div>
         </div>
       </aside>
-      <main class="main-content">${content}</main>
+      <main class="main-content"><div class="content-frame">${content}</div></main>
     </div>
   `;
 }
@@ -158,13 +161,26 @@ function redactMessage(message: string): string {
     .replace(/((?:access|refresh|id)[_-]?token\s*[:=]\s*)[^\s,;]+/gi, "$1[已隐藏]");
 }
 
+function escapeHTML(value: string): string {
+  return value.replace(
+    /[&<>"']/gu,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character] ?? character,
+  );
+}
+
 function fileRows(): string {
   if (files.length === 0) {
     return `<div class="empty-files">尚未添加文件</div>`;
   }
 
-  return `<div class="file-list" id="file-list" role="list"></div>
-    <script type="application/json" id="file-row-count">${files.length}</script>`;
+  return `<div class="file-list" id="file-list" role="list"></div>`;
 }
 
 function renderFileRows(): void {
@@ -204,28 +220,67 @@ function renderFileRows(): void {
   });
 }
 
+function sourceFormatSummary(): string {
+  const formats = new Set(parsedFiles.map((file) => file.format));
+  if (formats.size === 0) return "自动识别";
+  return [...formats].map(formatLabel).join(" + ");
+}
+
+function customGroupPreview(accountCount: number, value: string): string {
+  const preview = previewCustomGrouping(accountCount, value);
+  if (preview.error) {
+    return `<p class="custom-error" id="custom-error">${escapeHTML(preview.error)}</p>`;
+  }
+  if (accountCount === 0) {
+    return `<p class="custom-empty" id="custom-error">添加账号后显示实际分组</p>`;
+  }
+
+  return `
+    <div class="group-preview" id="custom-error" aria-label="分组预览">
+      <span class="group-preview-label">将生成</span>
+      <div class="group-size-list">
+        ${preview.outputSizes
+          .map(
+            (size, index) =>
+              `<span class="group-size${preview.remaining > 0 && index === preview.outputSizes.length - 1 ? " is-remainder" : ""}">${size}</span>`,
+          )
+          .join("")}
+      </div>
+      ${preview.remaining > 0 ? `<small>剩余 ${preview.remaining} 个自动成组</small>` : ""}
+    </div>
+  `;
+}
+
 function conversionView(): string {
   const normalized = normalizeFormState(formState);
   const accountCount = accounts.length;
   const outputCount = estimateOutputFiles(accountCount, normalized);
+  const isSplit = normalized.bundleMode === "split";
+  const isCPA = normalized.outputFormat === "cpa";
+  const isCustom =
+    !isCPA && isSplit && normalized.splitMode === "custom_sizes";
+  const customPreview = isCustom
+    ? previewCustomGrouping(accountCount, normalized.customSizes)
+    : null;
+  const hasFormError = Boolean(customPreview?.error);
   const downloadType = outputCount > 1 ? "ZIP" : "JSON";
   const previewName =
     accountCount === 0
       ? "添加文件后显示"
-      : outputFilename(
-          batchTimestamp,
-          normalized.outputFormat,
-          accountCount,
-          outputCount > 1 ? "zip" : "json",
-        );
-  const isSplit = normalized.bundleMode === "split";
-  const isCPA = normalized.outputFormat === "cpa";
+      : hasFormError
+        ? "请修正自定义分组"
+        : outputFilename(
+            batchTimestamp,
+            normalized.outputFormat,
+            accountCount,
+            outputCount > 1 ? "zip" : "json",
+          );
 
   return `
     ${pageHeader(
       "ACCOUNT TOOLKIT",
-      "账号文件转换",
-      "批量合并、按数量拆分，并输出可直接导入的账号文件。",
+      "Sub2API / CPA 转换与分号器",
+      "合并、拆分和格式转换都在当前浏览器中完成。",
     )}
     <section class="converter-layout" aria-label="账号转换工具">
       <div class="converter-main">
@@ -234,7 +289,14 @@ function conversionView(): string {
             <span class="step-index">1</span>
             <h2>添加账号文件</h2>
           </div>
-          ${files.length > 0 ? '<button class="quiet-button" id="clear-files" type="button"><i data-lucide="trash-2" aria-hidden="true"></i>清空</button>' : ""}
+          ${
+            files.length > 0
+              ? `<div class="section-actions">
+                  <button class="quiet-button" id="add-files" type="button"><i data-lucide="plus" aria-hidden="true"></i>继续添加</button>
+                  <button class="icon-button danger-button" id="clear-files" type="button" title="清空文件" aria-label="清空文件"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                </div>`
+              : ""
+          }
         </div>
         <label class="drop-zone${busy ? " is-disabled" : ""}" id="drop-zone" for="file-input">
           <input id="file-input" type="file" accept=".json,.jsonl,.ndjson,application/json" multiple ${busy ? "disabled" : ""} />
@@ -248,41 +310,70 @@ function conversionView(): string {
         <div class="section-heading">
           <div>
             <span class="step-index">2</span>
-            <h2>设置输出</h2>
+            <h2>格式转换</h2>
           </div>
         </div>
 
-        <div class="settings-grid">
-          <fieldset class="field-group">
+        <div class="format-flow">
+          <div class="format-node">
+            <span>输入格式</span>
+            <strong>${sourceFormatSummary()}</strong>
+            <small>${files.length > 0 ? `${files.length} 个文件` : "JSON / JSONL"}</small>
+          </div>
+          <span class="format-arrow"><i data-lucide="arrow-right-left" aria-hidden="true"></i></span>
+          <fieldset class="field-group format-output">
             <legend>输出格式</legend>
-            <div class="segmented" data-field="outputFormat">
-              <button type="button" data-value="sub2api" class="${normalized.outputFormat === "sub2api" ? "is-selected" : ""}">Sub2API</button>
-              <button type="button" data-value="cpa" class="${normalized.outputFormat === "cpa" ? "is-selected" : ""}">CPA</button>
+            <div class="format-options" data-field="outputFormat">
+              <button type="button" data-value="sub2api" class="${normalized.outputFormat === "sub2api" ? "is-selected" : ""}"><i data-lucide="braces" aria-hidden="true"></i><span><strong>Sub2API</strong><small>标准导入包</small></span></button>
+              <button type="button" data-value="cpa" class="${normalized.outputFormat === "cpa" ? "is-selected" : ""}"><i data-lucide="file-json" aria-hidden="true"></i><span><strong>CPA</strong><small>逐账号文件</small></span></button>
             </div>
           </fieldset>
+        </div>
 
+        <div class="section-divider"></div>
+        <div class="section-heading">
+          <div>
+            <span class="step-index">3</span>
+            <h2>拆分与打包</h2>
+          </div>
+        </div>
+
+        ${
+          isCPA
+            ? `<div class="locked-rule"><i data-lucide="file-archive" aria-hidden="true"></i><div><strong>每个账号单独输出</strong><span>多个 CPA 文件自动打包为 ZIP</span></div></div>`
+            : `<div class="settings-grid">
           <fieldset class="field-group">
             <legend>打包方式</legend>
             <div class="segmented" data-field="bundleMode">
-              <button type="button" data-value="merged" ${isCPA ? "disabled" : ""} class="${normalized.bundleMode === "merged" ? "is-selected" : ""}">合并为一份</button>
+              <button type="button" data-value="merged" class="${normalized.bundleMode === "merged" ? "is-selected" : ""}">合并为一份</button>
               <button type="button" data-value="split" class="${normalized.bundleMode === "split" ? "is-selected" : ""}">拆分文件</button>
             </div>
-            ${isCPA ? '<p class="field-hint">CPA 多账号按原生多文件 ZIP 输出</p>' : ""}
           </fieldset>
 
           <fieldset class="field-group split-settings${isSplit ? "" : " is-hidden"}">
             <legend>拆分规则</legend>
-            <div class="segmented" data-field="splitMode">
-              <button type="button" data-value="accounts_per_file" class="${normalized.splitMode === "accounts_per_file" ? "is-selected" : ""}">每份数量</button>
-              <button type="button" data-value="file_count" class="${normalized.splitMode === "file_count" ? "is-selected" : ""}">拆成几份</button>
+            <div class="segmented is-three" data-field="splitMode">
+              <button type="button" data-value="accounts_per_file" class="${normalized.splitMode === "accounts_per_file" ? "is-selected" : ""}">固定数量</button>
+              <button type="button" data-value="file_count" class="${normalized.splitMode === "file_count" ? "is-selected" : ""}">均分份数</button>
+              <button type="button" data-value="custom_sizes" class="${normalized.splitMode === "custom_sizes" ? "is-selected" : ""}">自定义</button>
             </div>
           </fieldset>
 
-          <label class="number-field split-settings${isSplit ? "" : " is-hidden"}" for="split-value">
-            <span>${normalized.splitMode === "accounts_per_file" ? "每份账号数" : "目标文件数"}</span>
+          <label class="number-field split-settings${isSplit && normalized.splitMode !== "custom_sizes" ? "" : " is-hidden"}" for="split-value">
+            <span>${normalized.splitMode === "accounts_per_file" ? "每份账号数" : "目标份数"}</span>
             <input id="split-value" type="number" min="1" step="1" inputmode="numeric" value="${normalized.splitValue}" />
           </label>
-        </div>
+
+          <div class="custom-settings split-settings${isCustom ? "" : " is-hidden"}">
+            <label for="custom-sizes">每份账号数</label>
+            <input id="custom-sizes" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="${escapeHTML(normalized.customSizes)}" placeholder="5,10,20,30,100" />
+            <div class="quick-sizes" aria-label="快捷添加数量">
+              ${[5, 10, 20, 30, 100].map((size) => `<button type="button" data-append-size="${size}"><i data-lucide="plus" aria-hidden="true"></i>${size}</button>`).join("")}
+            </div>
+            <div id="custom-preview">${customGroupPreview(accountCount, normalized.customSizes)}</div>
+          </div>
+        </div>`
+        }
       </div>
 
       <aside class="output-panel" aria-label="输出摘要">
@@ -296,14 +387,14 @@ function conversionView(): string {
         <dl class="summary-list">
           <div><dt>已选文件</dt><dd>${files.length}</dd></div>
           <div><dt>账号总数</dt><dd>${accountCount}</dd></div>
-          <div><dt>输出文件</dt><dd>${outputCount}</dd></div>
-          <div><dt>下载类型</dt><dd>${downloadType}</dd></div>
+          <div><dt>输出文件</dt><dd id="summary-output-count">${hasFormError ? "-" : outputCount}</dd></div>
+          <div><dt>下载类型</dt><dd id="summary-download-type">${hasFormError ? "待修正" : downloadType}</dd></div>
         </dl>
-        <div class="filename-preview"><span>下载文件</span><code title="${previewName}">${previewName}</code></div>
+        <div class="filename-preview"><span>下载文件</span><code id="summary-filename" title="${escapeHTML(previewName)}">${escapeHTML(previewName)}</code></div>
         <div class="status-line is-${statusKind}" role="status" aria-live="polite">
-          <span></span>${redactMessage(statusMessage)}
+          <span></span>${escapeHTML(redactMessage(statusMessage))}
         </div>
-        <button class="primary-button" id="download-button" type="button" ${busy || accountCount === 0 ? "disabled" : ""}>
+        <button class="primary-button" id="download-button" type="button" ${busy || accountCount === 0 || hasFormError ? "disabled" : ""}>
           <i data-lucide="${busy ? "refresh-cw" : "download"}" aria-hidden="true" class="${busy ? "spin" : ""}"></i>
           ${busy ? "处理中" : "生成并下载"}
         </button>
@@ -545,26 +636,37 @@ function downloadBlob(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function cpaAccountFilename(index: number, total: number): string {
+  const width = Math.max(3, String(total).length);
+  const accountNumber = String(index).padStart(width, "0");
+  const accountTotal = String(total).padStart(width, "0");
+  return `accounts-${batchTimestamp}-cpa-${total}-account-${accountNumber}-of-${accountTotal}.json`;
+}
+
 function renameArtifacts(source: Artifact[]): Artifact[] {
-  return source.map((artifact, index) => ({
-    ...artifact,
-    filename:
-      source.length === 1
-        ? outputFilename(
-            batchTimestamp,
-            formState.outputFormat,
-            accounts.length,
-            "json",
-          )
-        : outputFilename(
-            batchTimestamp,
-            formState.outputFormat,
-            accounts.length,
-            "json",
-            index + 1,
-            source.length,
-          ),
-  }));
+  return source.map((artifact, index) => {
+    let filename: string;
+    if (formState.outputFormat === "cpa") {
+      filename = cpaAccountFilename(index + 1, accounts.length);
+    } else if (source.length === 1) {
+      filename = outputFilename(
+        batchTimestamp,
+        formState.outputFormat,
+        accounts.length,
+        "json",
+      );
+    } else {
+      filename = outputFilename(
+        batchTimestamp,
+        formState.outputFormat,
+        accounts.length,
+        "json",
+        index + 1,
+        source.length,
+      );
+    }
+    return { ...artifact, filename };
+  });
 }
 
 function artifactArchive(artifacts: Artifact[]): Uint8Array {
@@ -619,6 +721,7 @@ function bindConverterEvents(): void {
     input.value = "";
   });
 
+  document.querySelector("#add-files")?.addEventListener("click", () => input?.click());
   const dropZone = document.querySelector<HTMLElement>("#drop-zone");
   dropZone?.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -637,7 +740,7 @@ function bindConverterEvents(): void {
     button.addEventListener("click", () => removeFile(Number(button.dataset.removeIndex)));
   });
 
-  document.querySelectorAll<HTMLDivElement>(".segmented[data-field]").forEach((group) => {
+  document.querySelectorAll<HTMLElement>("[data-field]").forEach((group) => {
     group.addEventListener("click", (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-value]");
       if (!button || button.disabled) return;
@@ -654,6 +757,76 @@ function bindConverterEvents(): void {
     });
     render();
   });
+
+  const customSizes = document.querySelector<HTMLInputElement>("#custom-sizes");
+  customSizes?.addEventListener("input", () => {
+    formState = { ...formState, customSizes: customSizes.value };
+    refreshCustomGroupingUI();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("[data-append-size]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!customSizes) return;
+      const size = button.dataset.appendSize;
+      const current = customSizes.value.trim().replace(/[,，\/／\s]+$/u, "");
+      customSizes.value = current ? `${current},${size}` : (size ?? "");
+      formState = { ...formState, customSizes: customSizes.value };
+      refreshCustomGroupingUI();
+      customSizes.focus();
+      customSizes.setSelectionRange(customSizes.value.length, customSizes.value.length);
+    });
+  });
+}
+
+function refreshCustomGroupingUI(): void {
+  const normalized = normalizeFormState(formState);
+  const preview = previewCustomGrouping(accounts.length, normalized.customSizes);
+  const previewContainer = document.querySelector<HTMLElement>("#custom-preview");
+  if (previewContainer) {
+    previewContainer.innerHTML = customGroupPreview(
+      accounts.length,
+      normalized.customSizes,
+    );
+  }
+
+  const outputCount = preview.error
+    ? 0
+    : estimateOutputFiles(accounts.length, normalized);
+  const downloadType = outputCount > 1 ? "ZIP" : "JSON";
+  const previewName =
+    accounts.length === 0
+      ? "添加文件后显示"
+      : preview.error
+        ? "请修正自定义分组"
+        : outputFilename(
+            batchTimestamp,
+            normalized.outputFormat,
+            accounts.length,
+            outputCount > 1 ? "zip" : "json",
+          );
+
+  const outputCountElement = document.querySelector<HTMLElement>(
+    "#summary-output-count",
+  );
+  const downloadTypeElement = document.querySelector<HTMLElement>(
+    "#summary-download-type",
+  );
+  const filenameElement = document.querySelector<HTMLElement>(
+    "#summary-filename",
+  );
+  const downloadButton = document.querySelector<HTMLButtonElement>(
+    "#download-button",
+  );
+
+  if (outputCountElement) outputCountElement.textContent = preview.error ? "-" : String(outputCount);
+  if (downloadTypeElement) downloadTypeElement.textContent = preview.error ? "待修正" : downloadType;
+  if (filenameElement) {
+    filenameElement.textContent = previewName;
+    filenameElement.title = previewName;
+  }
+  if (downloadButton) {
+    downloadButton.disabled = busy || accounts.length === 0 || Boolean(preview.error);
+  }
 }
 
 function bindCopyButtons(): void {

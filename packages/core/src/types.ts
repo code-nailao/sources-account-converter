@@ -28,7 +28,8 @@ export interface CanonicalAccount {
 export type Grouping =
   | { mode: "merge" }
   | { mode: "chunkSize"; chunkSize: number }
-  | { mode: "partCount"; partCount: number };
+  | { mode: "partCount"; partCount: number }
+  | { mode: "customSizes"; sizes: number[] };
 
 export interface RenderOptions {
   format: OutputFormat;

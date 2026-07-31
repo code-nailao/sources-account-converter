@@ -4,6 +4,7 @@ import {
   formatBatchTimestamp,
   normalizeFormState,
   outputFilename,
+  previewCustomGrouping,
   toRenderOptions,
   type ConversionFormState,
 } from "./conversion";
@@ -13,6 +14,7 @@ const splitBySize: ConversionFormState = {
   bundleMode: "split",
   splitMode: "accounts_per_file",
   splitValue: 20,
+  customSizes: "5,10,20,30,100",
 };
 
 describe("conversion form", () => {
@@ -48,6 +50,42 @@ describe("conversion form", () => {
   it("normalizes invalid numeric values", () => {
     expect(normalizeFormState({ ...splitBySize, splitValue: 0 }).splitValue).toBe(
       1,
+    );
+  });
+
+  it("builds custom groups and appends the remaining accounts", () => {
+    const state: ConversionFormState = {
+      ...splitBySize,
+      bundleMode: "split",
+      splitMode: "custom_sizes",
+      customSizes: "5 / 10，20 30,100",
+    };
+
+    expect(previewCustomGrouping(200, state.customSizes)).toEqual({
+      requestedSizes: [5, 10, 20, 30, 100],
+      outputSizes: [5, 10, 20, 30, 100, 35],
+      remaining: 35,
+      error: null,
+    });
+    expect(estimateOutputFiles(200, state)).toBe(6);
+    expect(toRenderOptions(state)).toEqual({
+      format: "sub2api",
+      grouping: { mode: "customSizes", sizes: [5, 10, 20, 30, 100] },
+    });
+  });
+
+  it("truncates a requested custom group to the remaining accounts", () => {
+    const preview = previewCustomGrouping(20, "5,10,20");
+
+    expect(preview.outputSizes).toEqual([5, 10, 5]);
+    expect(preview.remaining).toBe(5);
+    expect(preview.error).toBeNull();
+    expect(previewCustomGrouping(12, "5,100,20").outputSizes).toEqual([5, 7]);
+  });
+
+  it("rejects invalid custom group tokens", () => {
+    expect(previewCustomGrouping(200, "5,ten,20").error).toBe(
+      "“ten”不是有效的正整数",
     );
   });
 

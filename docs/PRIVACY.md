@@ -2,7 +2,7 @@
 
 ## 网页端
 
-- 账号文件只在浏览器当前页面内存中读取。
+- 账号文件只在浏览器当前页面内存中读取；解析、合并、自定义分份、格式转换和 ZIP 生成均在本地完成。
 - 页面不使用 `fetch`、`XMLHttpRequest`、表单上传或远程转换接口。
 - 页面不注册 Service Worker，不使用 analytics，不写 Cookie、localStorage、sessionStorage 或 IndexedDB。
 - CSP 至少包含 `connect-src 'none'`；`blob:` 仅用于当前页面生成下载文件。

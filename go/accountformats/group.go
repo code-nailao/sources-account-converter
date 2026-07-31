@@ -20,6 +20,27 @@ func Group(accounts []Account, grouping Grouping) ([][]Account, error) {
 			groups = append(groups, append([]Account(nil), accounts[start:end]...))
 		}
 		return groups, nil
+	case GroupingCustomSizes:
+		if len(grouping.Sizes) == 0 {
+			return nil, errorf("invalid_grouping", "sizes must contain at least one positive integer")
+		}
+		groups := make([][]Account, 0, len(grouping.Sizes)+1)
+		offset := 0
+		for _, requestedSize := range grouping.Sizes {
+			if requestedSize <= 0 {
+				return nil, errorf("invalid_grouping", "sizes must contain only positive integers")
+			}
+			if offset >= len(accounts) {
+				break
+			}
+			end := min(offset+requestedSize, len(accounts))
+			groups = append(groups, append([]Account(nil), accounts[offset:end]...))
+			offset = end
+		}
+		if offset < len(accounts) {
+			groups = append(groups, append([]Account(nil), accounts[offset:]...))
+		}
+		return groups, nil
 	case GroupingPartCount:
 		if grouping.PartCount <= 0 {
 			return nil, errorf("invalid_grouping", "partCount must be a positive integer")

@@ -20,6 +20,26 @@ export function groupAccounts(accounts: readonly CanonicalAccount[], grouping: G
     return groups;
   }
 
+  if (grouping.mode === "customSizes") {
+    if (grouping.sizes.length === 0) {
+      throw new AccountConverterError("invalid_grouping", "sizes must contain at least one positive integer", { field: "sizes" });
+    }
+    grouping.sizes.forEach((size, index) => positiveInteger(size, `sizes[${index}]`));
+
+    const groups: CanonicalAccount[][] = [];
+    let offset = 0;
+    for (const requestedSize of grouping.sizes) {
+      if (offset >= accounts.length) break;
+      const end = Math.min(offset + requestedSize, accounts.length);
+      groups.push(accounts.slice(offset, end));
+      offset = end;
+    }
+    if (offset < accounts.length) {
+      groups.push(accounts.slice(offset));
+    }
+    return groups;
+  }
+
   positiveInteger(grouping.partCount, "partCount");
   const groupCount = Math.min(grouping.partCount, accounts.length);
   const baseSize = Math.floor(accounts.length / groupCount);

@@ -79,9 +79,23 @@ describe("groupAccounts", () => {
     expect(groupAccounts(accounts.slice(0, 2), { mode: "partCount", partCount: 10 }).map((group) => group.length)).toEqual([1, 1]);
   });
 
+  it("splits accounts by a custom sequence and appends the remainder", () => {
+    expect(
+      groupAccounts(accounts, { mode: "customSizes", sizes: [5, 10, 20, 30, 100] }).map((group) => group.length),
+    ).toEqual([5, 10, 20, 30, 100, 35]);
+  });
+
+  it("clamps a custom group to the remaining accounts and stops", () => {
+    expect(
+      groupAccounts(accounts.slice(0, 12), { mode: "customSizes", sizes: [5, 100, 20] }).map((group) => group.length),
+    ).toEqual([5, 7]);
+  });
+
   it("rejects invalid grouping values", () => {
     expect(() => groupAccounts(accounts, { mode: "chunkSize", chunkSize: 0 })).toThrow(AccountConverterError);
     expect(() => groupAccounts(accounts, { mode: "partCount", partCount: 1.5 })).toThrow(AccountConverterError);
+    expect(() => groupAccounts(accounts, { mode: "customSizes", sizes: [] })).toThrow(AccountConverterError);
+    expect(() => groupAccounts(accounts, { mode: "customSizes", sizes: [5, 0] })).toThrow(AccountConverterError);
   });
 });
 
@@ -112,6 +126,17 @@ describe("renderArtifacts", () => {
     expect(artifacts).toHaveLength(7);
     expect(artifacts.map((artifact) => artifact.accountCount)).toEqual([30, 30, 30, 30, 30, 30, 20]);
     expect(artifacts[6]?.filename).toBe("accounts-20260731-000000-sub2api-200-part-007-of-007.json");
+  });
+
+  it("renders custom Sub2API bundle sizes including the automatic remainder", () => {
+    const accounts = parseAccounts(JSON.stringify(Array.from({ length: 200 }, (_, index) => subAccount(index + 1))));
+    const artifacts = renderArtifacts(accounts, {
+      format: "sub2api",
+      grouping: { mode: "customSizes", sizes: [5, 10, 20, 30, 100] },
+      generatedAt: "2026-07-31T00:00:00Z",
+    });
+    expect(artifacts.map((artifact) => artifact.accountCount)).toEqual([5, 10, 20, 30, 100, 35]);
+    expect(artifacts[5]?.filename).toBe("accounts-20260731-000000-sub2api-200-part-006-of-006.json");
   });
 
   it("renders strict CPA as one native JSON artifact per account and carries bundle indexes", () => {
