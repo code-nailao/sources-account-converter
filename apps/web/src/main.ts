@@ -379,7 +379,7 @@ function apiView(): string {
           ${codeBlock(nodeSDKExample, "node-sdk-code")}
         </section>
         <section id="contract">
-          <div class="doc-title"><span>03</span><div><h2>接口约定</h2><p>会话对象隔离敏感账号数据，页面只消费安全摘要。</p></div></div>
+          <div class="doc-title"><span>03</span><div><h2>接口约定</h2><p>敏感账号数据只保留在调用方内存，页面只消费安全摘要。</p></div></div>
           <div class="contract-table" role="table" aria-label="SDK 接口约定">
             <div role="row"><strong role="cell">parseAccounts</strong><span role="cell">解析 JSON、JSONL 与常见账号容器</span></div>
             <div role="row"><strong role="cell">groupAccounts</strong><span role="cell">按每份数量或目标份数进行稳定分组</span></div>
