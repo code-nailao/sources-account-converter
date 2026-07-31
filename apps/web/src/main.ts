@@ -209,12 +209,15 @@ function conversionView(): string {
   const accountCount = accounts.length;
   const outputCount = estimateOutputFiles(accountCount, normalized);
   const downloadType = outputCount > 1 ? "ZIP" : "JSON";
-  const previewName = outputFilename(
-    batchTimestamp,
-    normalized.outputFormat,
-    accountCount,
-    outputCount > 1 ? "zip" : "json",
-  );
+  const previewName =
+    accountCount === 0
+      ? "添加文件后显示"
+      : outputFilename(
+          batchTimestamp,
+          normalized.outputFormat,
+          accountCount,
+          outputCount > 1 ? "zip" : "json",
+        );
   const isSplit = normalized.bundleMode === "split";
   const isCPA = normalized.outputFormat === "cpa";
 
@@ -261,8 +264,8 @@ function conversionView(): string {
           <fieldset class="field-group">
             <legend>打包方式</legend>
             <div class="segmented" data-field="bundleMode">
-              <button type="button" data-value="merged" ${isCPA ? "disabled" : ""} class="${normalized.bundleMode === "merged" ? "is-selected" : ""}>合并为一份</button>
-              <button type="button" data-value="split" class="${normalized.bundleMode === "split" ? "is-selected" : ""}>拆分文件</button>
+              <button type="button" data-value="merged" ${isCPA ? "disabled" : ""} class="${normalized.bundleMode === "merged" ? "is-selected" : ""}">合并为一份</button>
+              <button type="button" data-value="split" class="${normalized.bundleMode === "split" ? "is-selected" : ""}">拆分文件</button>
             </div>
             ${isCPA ? '<p class="field-hint">CPA 多账号按原生多文件 ZIP 输出</p>' : ""}
           </fieldset>
@@ -270,8 +273,8 @@ function conversionView(): string {
           <fieldset class="field-group split-settings${isSplit ? "" : " is-hidden"}">
             <legend>拆分规则</legend>
             <div class="segmented" data-field="splitMode">
-              <button type="button" data-value="accounts_per_file" class="${normalized.splitMode === "accounts_per_file" ? "is-selected" : ""}>每份数量</button>
-              <button type="button" data-value="file_count" class="${normalized.splitMode === "file_count" ? "is-selected" : ""}>拆成几份</button>
+              <button type="button" data-value="accounts_per_file" class="${normalized.splitMode === "accounts_per_file" ? "is-selected" : ""}">每份数量</button>
+              <button type="button" data-value="file_count" class="${normalized.splitMode === "file_count" ? "is-selected" : ""}">拆成几份</button>
             </div>
           </fieldset>
 
