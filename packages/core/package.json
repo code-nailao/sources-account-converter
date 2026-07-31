@@ -1,0 +1,21 @@
+{
+  "name": "@sources/account-converter-core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser and Node compatible offline account format converter core",
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  }
+}

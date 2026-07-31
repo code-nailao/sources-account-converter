@@ -1,0 +1,298 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "preserve real-shape sub2api merge",
+      "input": {
+        "exported_at": "2026-07-30T12:24:16Z",
+        "proxies": [{ "id": 7, "name": "proxy-seven" }],
+        "accounts": [
+          {
+            "name": "synthetic-team-account",
+            "platform": "openai",
+            "type": "oauth",
+            "plan_type": "team",
+            "concurrency": 100,
+            "priority": 999,
+            "rate_multiplier": 1,
+            "auto_pause_on_expired": true,
+            "credentials": {
+              "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMSJ9.c2ln",
+              "refresh_token": "rt_contract_alpha_7G4m9Q",
+              "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0xIn0.c2ln",
+              "email": "synthetic-1@example.invalid",
+              "chatgpt_account_id": "acct_contract_alpha",
+              "chatgpt_user_id": "user_contract_alpha",
+              "client_id": "app_contract_alpha",
+              "organization_id": "org_contract_alpha",
+              "plan_type": "team",
+              "token_type": "Bearer",
+              "expires_at": 0,
+              "model_mapping": { "gpt-contract": "gpt-contract" }
+            },
+            "extra": {
+              "email": "synthetic-1@example.invalid",
+              "privacy_mode": "training_off",
+              "openai_oauth_responses_websockets_v2_enabled": false,
+              "openai_oauth_responses_websockets_v2_mode": "off"
+            }
+          }
+        ]
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "merge" },
+        "timestamp": "2026-07-31T18:15:30+08:00",
+        "exportedAt": "2026-07-31T10:15:30Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-1.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T10:15:30Z",
+            "proxies": [{ "id": 7, "name": "proxy-seven" }],
+            "accounts": [
+              {
+                "name": "synthetic-team-account",
+                "platform": "openai",
+                "type": "oauth",
+                "plan_type": "team",
+                "concurrency": 100,
+                "priority": 999,
+                "rate_multiplier": 1,
+                "auto_pause_on_expired": true,
+                "credentials": {
+                  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMSJ9.c2ln",
+                  "refresh_token": "rt_contract_alpha_7G4m9Q",
+                  "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0xIn0.c2ln",
+                  "email": "synthetic-1@example.invalid",
+                  "chatgpt_account_id": "acct_contract_alpha",
+                  "chatgpt_user_id": "user_contract_alpha",
+                  "client_id": "app_contract_alpha",
+                  "organization_id": "org_contract_alpha",
+                  "plan_type": "team",
+                  "token_type": "Bearer",
+                  "expires_at": 0,
+                  "model_mapping": { "gpt-contract": "gpt-contract" }
+                },
+                "extra": {
+                  "email": "synthetic-1@example.invalid",
+                  "privacy_mode": "training_off",
+                  "openai_oauth_responses_websockets_v2_enabled": false,
+                  "openai_oauth_responses_websockets_v2_mode": "off"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "chunk sub2api accounts by size",
+      "input": {
+        "accounts": [
+          { "name": "one", "platform": "openai", "type": "oauth", "credentials": { "marker": 1 } },
+          { "name": "two", "platform": "openai", "type": "oauth", "credentials": { "marker": 2 } },
+          { "name": "three", "platform": "openai", "type": "oauth", "credentials": { "marker": 3 } }
+        ]
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "chunkSize", "chunkSize": 2 },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-3-part-001-of-002.json",
+          "accountCount": 2,
+          "bundleIndex": 1,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              { "name": "one", "platform": "openai", "type": "oauth", "credentials": { "marker": 1 } },
+              { "name": "two", "platform": "openai", "type": "oauth", "credentials": { "marker": 2 } }
+            ]
+          }
+        },
+        {
+          "filename": "accounts-20260731-181530-sub2api-3-part-002-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 2,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              { "name": "three", "platform": "openai", "type": "oauth", "credentials": { "marker": 3 } }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "strict sub2api to cpa conversion",
+      "input": {
+        "accounts": [
+          {
+            "name": "source-one",
+            "platform": "openai",
+            "type": "oauth",
+            "priority": 998,
+            "credentials": {
+              "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMSJ9.c2ln",
+              "refresh_token": "rt_contract_alpha_7G4m9Q",
+              "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0xIn0.c2ln",
+              "chatgpt_account_id": "acct_contract_alpha",
+              "email": "synthetic-1@example.invalid"
+            }
+          },
+          {
+            "name": "source-two",
+            "platform": "openai",
+            "type": "oauth",
+            "priority": 997,
+            "credentials": {
+              "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMiJ9.c2ln",
+              "refresh_token": "rt_contract_beta_5H2p8V",
+              "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0yIn0.c2ln",
+              "chatgpt_account_id": "acct_contract_beta",
+              "email": "synthetic-2@example.invalid"
+            }
+          }
+        ]
+      },
+      "options": {
+        "format": "cpa",
+        "grouping": { "mode": "partCount", "partCount": 1 },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-cpa-2-account-001-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "cpa",
+          "json": {
+            "type": "codex",
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMSJ9.c2ln",
+            "refresh_token": "rt_contract_alpha_7G4m9Q",
+            "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0xIn0.c2ln",
+            "account_id": "acct_contract_alpha",
+            "email": "synthetic-1@example.invalid",
+            "priority": 998
+          }
+        },
+        {
+          "filename": "accounts-20260731-181530-cpa-2-account-002-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "cpa",
+          "json": {
+            "type": "codex",
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMiJ9.c2ln",
+            "refresh_token": "rt_contract_beta_5H2p8V",
+            "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0yIn0.c2ln",
+            "account_id": "acct_contract_beta",
+            "email": "synthetic-2@example.invalid",
+            "priority": 997
+          }
+        }
+      ]
+    },
+    {
+      "name": "strict cpa to sub2api conversion",
+      "input": {
+        "type": "codex",
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMyJ9.c2ln",
+        "refresh_token": "rt_contract_gamma_3K8n6D",
+        "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0zIn0.c2ln",
+        "account_id": "acct_contract_gamma",
+        "email": "synthetic-3@example.invalid"
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "merge" },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-1.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "codex-account-001",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMyJ9.c2ln",
+                  "refresh_token": "rt_contract_gamma_3K8n6D",
+                  "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJpZC0zIn0.c2ln",
+                  "chatgpt_account_id": "acct_contract_gamma",
+                  "email": "synthetic-3@example.invalid"
+                },
+                "extra": { "email": "synthetic-3@example.invalid" }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "errorCases": [
+    {
+      "name": "reject missing id token and account id",
+      "input": {
+        "platform": "openai",
+        "type": "oauth",
+        "credentials": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhY2Nlc3MtMSJ9.c2ln",
+          "refresh_token": "rt_contract_alpha_7G4m9Q"
+        }
+      },
+      "options": {
+        "format": "cpa",
+        "grouping": { "mode": "merge" },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "errorCode": "missing_cpa_credentials"
+    },
+    {
+      "name": "reject malformed jwt and placeholder refresh token",
+      "input": {
+        "type": "codex",
+        "access_token": "not-a-jwt",
+        "refresh_token": "placeholder",
+        "id_token": "not-a-jwt",
+        "account_id": "acct_contract_delta"
+      },
+      "options": {
+        "format": "cpa",
+        "grouping": { "mode": "merge" },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "errorCode": "missing_cpa_credentials"
+    },
+    {
+      "name": "reject implicit filename timestamp",
+      "input": { "platform": "openai", "type": "oauth", "credentials": {} },
+      "options": { "format": "sub2api", "grouping": { "mode": "merge" } },
+      "errorCode": "invalid_timestamp"
+    }
+  ]
+}

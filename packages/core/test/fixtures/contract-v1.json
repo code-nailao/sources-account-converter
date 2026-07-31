@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "merge-sub2api",
+      "input": {
+        "exported_at": "2026-07-31T00:00:00Z",
+        "proxies": [],
+        "accounts": [
+          {
+            "name": "source-one",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": { "refresh_token": "test-refresh-001" },
+            "extra": { "keep_unknown": true }
+          },
+          {
+            "name": "source-two",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": { "refresh_token": "test-refresh-002" }
+          }
+        ]
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "merge" },
+        "generatedAt": "2026-07-31T00:00:00Z",
+        "exportedAt": "2026-07-31T00:00:00Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-000000-sub2api-2.json",
+          "accountCount": 2,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T00:00:00Z",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "source-one",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": { "refresh_token": "test-refresh-001" },
+                "extra": { "keep_unknown": true }
+              },
+              {
+                "name": "source-two",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": { "refresh_token": "test-refresh-002" }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "chunk-size-original",
+      "input": [
+        { "slot": 1 },
+        { "slot": 2 },
+        { "slot": 3 },
+        { "slot": 4 },
+        { "slot": 5 }
+      ],
+      "options": {
+        "format": "original",
+        "grouping": { "mode": "chunkSize", "chunkSize": 2 },
+        "generatedAt": "2026-07-31T00:00:00Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-000000-original-5-part-001-of-003.json",
+          "accountCount": 2,
+          "bundleIndex": 1,
+          "bundleCount": 3,
+          "format": "original",
+          "json": [{ "slot": 1 }, { "slot": 2 }]
+        },
+        {
+          "filename": "accounts-20260731-000000-original-5-part-002-of-003.json",
+          "accountCount": 2,
+          "bundleIndex": 2,
+          "bundleCount": 3,
+          "format": "original",
+          "json": [{ "slot": 3 }, { "slot": 4 }]
+        },
+        {
+          "filename": "accounts-20260731-000000-original-5-part-003-of-003.json",
+          "accountCount": 1,
+          "bundleIndex": 3,
+          "bundleCount": 3,
+          "format": "original",
+          "json": { "slot": 5 }
+        }
+      ]
+    },
+    {
+      "name": "part-count-balanced",
+      "input": {
+        "accounts": [
+          { "name": "one", "credentials": {} },
+          { "name": "two", "credentials": {} },
+          { "name": "three", "credentials": {} },
+          { "name": "four", "credentials": {} },
+          { "name": "five", "credentials": {} }
+        ]
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "partCount", "partCount": 2 },
+        "generatedAt": "2026-07-31T00:00:00Z",
+        "exportedAt": "2026-07-31T00:00:00Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-000000-sub2api-5-part-001-of-002.json",
+          "accountCount": 3,
+          "bundleIndex": 1,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T00:00:00Z",
+            "proxies": [],
+            "accounts": [
+              { "name": "one", "credentials": {} },
+              { "name": "two", "credentials": {} },
+              { "name": "three", "credentials": {} }
+            ]
+          }
+        },
+        {
+          "filename": "accounts-20260731-000000-sub2api-5-part-002-of-002.json",
+          "accountCount": 2,
+          "bundleIndex": 2,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T00:00:00Z",
+            "proxies": [],
+            "accounts": [
+              { "name": "four", "credentials": {} },
+              { "name": "five", "credentials": {} }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "strict-cpa-output",
+      "input": {
+        "type": "codex",
+        "access_token": "header.access.signature",
+        "refresh_token": "test-refresh-cpa",
+        "id_token": "header.identity.signature",
+        "account_id": "test-account-cpa",
+        "priority": 777,
+        "disabled": false
+      },
+      "options": {
+        "format": "cpa",
+        "grouping": { "mode": "merge" },
+        "generatedAt": "2026-07-31T00:00:00Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-000000-cpa-1-account-001-of-001.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "cpa",
+          "json": {
+            "type": "codex",
+            "access_token": "header.access.signature",
+            "refresh_token": "test-refresh-cpa",
+            "id_token": "header.identity.signature",
+            "account_id": "test-account-cpa",
+            "priority": 777,
+            "disabled": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "cpa-to-sub2api-private-name",
+      "input": {
+        "type": "codex",
+        "access_token": "header.access.signature",
+        "refresh_token": "test-refresh-cpa",
+        "id_token": "header.identity.signature",
+        "account_id": "test-account-cpa"
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": { "mode": "merge" },
+        "generatedAt": "2026-07-31T00:00:00Z",
+        "exportedAt": "2026-07-31T00:00:00Z"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-000000-sub2api-1.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T00:00:00Z",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "codex-account-001",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "header.access.signature",
+                  "refresh_token": "test-refresh-cpa",
+                  "id_token": "header.identity.signature",
+                  "chatgpt_account_id": "test-account-cpa"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
