@@ -545,8 +545,23 @@ svg {
 .format-flow {
   display: grid;
   grid-template-columns: minmax(150px, 0.8fr) 36px minmax(0, 1.4fr);
-  align-items: center;
+  align-items: end;
   gap: 13px;
+}
+
+.format-source {
+  min-width: 0;
+}
+
+.format-label,
+.field-group legend,
+.number-field > span,
+.custom-settings > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .format-node {
@@ -560,7 +575,6 @@ svg {
   background: var(--surface-subtle);
 }
 
-.format-node span,
 .format-node small,
 .format-options small {
   color: var(--muted);
@@ -573,6 +587,7 @@ svg {
 }
 
 .format-arrow {
+  min-height: 78px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -589,15 +604,6 @@ svg {
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-.field-group legend,
-.number-field > span,
-.custom-settings > label {
-  margin-bottom: 8px;
-  color: #344054;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .format-options {
@@ -1399,6 +1405,7 @@ svg {
   }
 
   .format-arrow {
+    min-height: 28px;
     transform: rotate(90deg);
   }
 

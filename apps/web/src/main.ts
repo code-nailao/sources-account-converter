@@ -315,10 +315,12 @@ function conversionView(): string {
         </div>
 
         <div class="format-flow">
-          <div class="format-node">
-            <span>输入格式</span>
-            <strong>${sourceFormatSummary()}</strong>
-            <small>${files.length > 0 ? `${files.length} 个文件` : "JSON / JSONL"}</small>
+          <div class="format-source">
+            <span class="format-label">输入格式</span>
+            <div class="format-node">
+              <strong>${sourceFormatSummary()}</strong>
+              <small>${files.length > 0 ? `${files.length} 个文件` : "JSON / JSONL"}</small>
+            </div>
           </div>
           <span class="format-arrow"><i data-lucide="arrow-right-left" aria-hidden="true"></i></span>
           <fieldset class="field-group format-output">
