@@ -39,7 +39,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -402,6 +403,48 @@ svg {
   height: 16px;
 }
 
+.input-methods {
+  width: fit-content;
+  margin-bottom: 12px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(112px, 1fr));
+  gap: 3px;
+  background: var(--surface-subtle);
+}
+
+.input-methods button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #667085;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.input-methods button:hover {
+  color: #344054;
+}
+
+.input-methods button.is-selected {
+  color: var(--accent-strong);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.08);
+}
+
+.input-methods svg {
+  width: 15px;
+  height: 15px;
+}
+
 .drop-zone {
   min-height: 164px;
   padding: 26px 20px;
@@ -465,6 +508,92 @@ svg {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.paste-panel {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+}
+
+.paste-panel > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.paste-panel textarea {
+  width: 100%;
+  min-height: 164px;
+  max-height: 420px;
+  padding: 12px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  display: block;
+  resize: vertical;
+  color: #1d2939;
+  background: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.paste-panel textarea::placeholder {
+  color: #98a2b3;
+}
+
+.paste-panel textarea:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.paste-actions {
+  min-height: 38px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.paste-actions > span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.parse-button {
+  min-width: 112px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #ffffff;
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.parse-button:hover:not(:disabled) {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+
+.parse-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.parse-button svg {
+  width: 15px;
+  height: 15px;
 }
 
 .file-list {
@@ -1434,6 +1563,20 @@ svg {
   .drop-zone {
     min-height: 150px;
     padding: 22px 14px;
+  }
+
+  .input-methods {
+    width: 100%;
+  }
+
+  .paste-actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .parse-button {
+    width: 100%;
   }
 
   .format-options button {

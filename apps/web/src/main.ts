@@ -3,6 +3,7 @@ import {
   Braces,
   Check,
   ChevronRight,
+  ClipboardPaste,
   Code2,
   Download,
   FileArchive,
@@ -19,6 +20,7 @@ import {
   createIcons,
 } from "lucide";
 import {
+  AccountConverterError,
   parseAccounts,
   renderArtifacts,
   type Artifact,
@@ -40,6 +42,15 @@ import {
 import "./styles.css";
 
 type Route = "convert" | "api" | "privacy";
+type InputMode = "file" | "paste";
+type InputBatch = {
+  id: number;
+  kind: InputMode;
+  name: string;
+  byteSize: number;
+  accounts: CanonicalAccount[];
+  format: SourceFormat | "mixed";
+};
 
 const MAX_FILES = 5_000;
 const MAX_TOTAL_BYTES = 256 * 1024 * 1024;
@@ -48,17 +59,16 @@ const ACCEPTED_EXTENSIONS = [".json", ".jsonl", ".ndjson"];
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root");
 
-let files: File[] = [];
+let inputBatches: InputBatch[] = [];
 let accounts: CanonicalAccount[] = [];
-let parsedFiles: Array<{
-  name: string;
-  accountCount: number;
-  format: SourceFormat | "mixed";
-}> = [];
+let inputMode: InputMode = "file";
+let pastedDraft = "";
+let nextBatchId = 1;
+let nextPasteNumber = 1;
 let formState: ConversionFormState = { ...DEFAULT_FORM_STATE };
 let batchTimestamp = formatBatchTimestamp(new Date());
 let busy = false;
-let statusMessage = "等待添加文件";
+let statusMessage = "等待添加账号";
 let statusKind: "neutral" | "success" | "error" = "neutral";
 
 const iconSet = {
@@ -66,6 +76,7 @@ const iconSet = {
   Braces,
   Check,
   ChevronRight,
+  ClipboardPaste,
   Code2,
   Download,
   FileArchive,
@@ -123,7 +134,7 @@ function appShell(content: string): string {
           </a>
           <div class="sidebar-note">
             <i data-lucide="lock-keyhole" aria-hidden="true"></i>
-            <span>文件仅在当前页面内存中处理</span>
+            <span>账号数据仅在当前页面内存中处理</span>
           </div>
         </div>
       </aside>
@@ -175,44 +186,41 @@ function escapeHTML(value: string): string {
   );
 }
 
-function fileRows(): string {
-  if (files.length === 0) {
-    return `<div class="empty-files">尚未添加文件</div>`;
+function inputRows(): string {
+  if (inputBatches.length === 0) {
+    return `<div class="empty-files">尚未添加账号</div>`;
   }
 
-  return `<div class="file-list" id="file-list" role="list"></div>`;
+  return `<div class="file-list" id="input-list" role="list"></div>`;
 }
 
-function renderFileRows(): void {
-  const container = document.querySelector<HTMLDivElement>("#file-list");
+function renderInputRows(): void {
+  const container = document.querySelector<HTMLDivElement>("#input-list");
   if (!container) return;
 
-  files.forEach((file, index) => {
-    const parsed = parsedFiles[index];
+  inputBatches.forEach((batch) => {
     const row = document.createElement("div");
     row.className = "file-row";
     row.setAttribute("role", "listitem");
 
     const icon = document.createElement("span");
     icon.className = "file-icon";
-    icon.innerHTML = '<i data-lucide="file-json" aria-hidden="true"></i>';
+    icon.innerHTML = `<i data-lucide="${batch.kind === "paste" ? "clipboard-paste" : "file-json"}" aria-hidden="true"></i>`;
 
     const details = document.createElement("div");
     details.className = "file-details";
     const name = document.createElement("strong");
-    name.textContent = file.name;
+    name.textContent = batch.name;
     const meta = document.createElement("span");
-    meta.textContent = parsed
-      ? `${formatLabel(parsed.format)} · ${parsed.accountCount} 个账号 · ${formatFileSize(file.size)}`
-      : `${formatFileSize(file.size)} · 待解析`;
+    meta.textContent = `${formatLabel(batch.format)} · ${batch.accounts.length} 个账号 · ${formatFileSize(batch.byteSize)}`;
     details.append(name, meta);
 
     const remove = document.createElement("button");
     remove.className = "icon-button";
     remove.type = "button";
-    remove.title = "移除文件";
-    remove.setAttribute("aria-label", `移除 ${file.name}`);
-    remove.dataset.removeIndex = String(index);
+    remove.title = "移除输入";
+    remove.setAttribute("aria-label", `移除 ${batch.name}`);
+    remove.dataset.removeBatch = String(batch.id);
     remove.innerHTML = '<i data-lucide="trash-2" aria-hidden="true"></i>';
 
     row.append(icon, details, remove);
@@ -221,7 +229,7 @@ function renderFileRows(): void {
 }
 
 function sourceFormatSummary(): string {
-  const formats = new Set(parsedFiles.map((file) => file.format));
+  const formats = new Set(inputBatches.map((batch) => batch.format));
   if (formats.size === 0) return "自动识别";
   return [...formats].map(formatLabel).join(" + ");
 }
@@ -266,7 +274,7 @@ function conversionView(): string {
   const downloadType = outputCount > 1 ? "ZIP" : "JSON";
   const previewName =
     accountCount === 0
-      ? "添加文件后显示"
+      ? "添加账号后显示"
       : hasFormError
         ? "请修正自定义分组"
         : outputFilename(
@@ -287,24 +295,45 @@ function conversionView(): string {
         <div class="section-heading">
           <div>
             <span class="step-index">1</span>
-            <h2>添加账号文件</h2>
+            <h2>添加账号</h2>
           </div>
           ${
-            files.length > 0
+            inputBatches.length > 0
               ? `<div class="section-actions">
-                  <button class="quiet-button" id="add-files" type="button"><i data-lucide="plus" aria-hidden="true"></i>继续添加</button>
-                  <button class="icon-button danger-button" id="clear-files" type="button" title="清空文件" aria-label="清空文件"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                  <button class="icon-button danger-button" id="clear-inputs" type="button" title="清空全部输入" aria-label="清空全部输入"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                 </div>`
               : ""
           }
         </div>
-        <label class="drop-zone${busy ? " is-disabled" : ""}" id="drop-zone" for="file-input">
-          <input id="file-input" type="file" accept=".json,.jsonl,.ndjson,application/json" multiple ${busy ? "disabled" : ""} />
-          <span class="drop-icon"><i data-lucide="upload-cloud" aria-hidden="true"></i></span>
-          <strong>拖入 JSON 文件，或点击选择</strong>
-          <span>支持单个大文件和多个单账号文件</span>
-        </label>
-        ${fileRows()}
+        <div class="input-methods" role="tablist" aria-label="账号添加方式">
+          <button id="file-mode" type="button" role="tab" aria-selected="${inputMode === "file"}" data-input-mode="file" class="${inputMode === "file" ? "is-selected" : ""}">
+            <i data-lucide="upload-cloud" aria-hidden="true"></i>上传文件
+          </button>
+          <button id="paste-mode" type="button" role="tab" aria-selected="${inputMode === "paste"}" data-input-mode="paste" class="${inputMode === "paste" ? "is-selected" : ""}">
+            <i data-lucide="clipboard-paste" aria-hidden="true"></i>粘贴 JSON
+          </button>
+        </div>
+        ${
+          inputMode === "file"
+            ? `<label class="drop-zone${busy ? " is-disabled" : ""}" id="drop-zone" for="file-input">
+                <input id="file-input" type="file" accept=".json,.jsonl,.ndjson,application/json" multiple ${busy ? "disabled" : ""} />
+                <span class="drop-icon"><i data-lucide="upload-cloud" aria-hidden="true"></i></span>
+                <strong>拖入 JSON 文件，或点击选择</strong>
+                <span>支持单个大文件和多个单账号文件</span>
+              </label>`
+            : `<div class="paste-panel" role="tabpanel" aria-labelledby="paste-mode">
+                <label for="pasted-json">JSON 内容</label>
+                <textarea id="pasted-json" rows="9" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="粘贴单个账号、多账号数组或 JSONL / NDJSON" ${busy ? "disabled" : ""}></textarea>
+                <div class="paste-actions">
+                  <span>凭据只在当前浏览器内存中解析</span>
+                  <button class="parse-button" id="parse-pasted-json" type="button" ${busy || pastedDraft.trim() === "" ? "disabled" : ""}>
+                    <i data-lucide="${busy ? "refresh-cw" : "plus"}" aria-hidden="true" class="${busy ? "spin" : ""}"></i>
+                    ${busy ? "正在解析" : "解析并添加"}
+                  </button>
+                </div>
+              </div>`
+        }
+        ${inputRows()}
 
         <div class="section-divider"></div>
         <div class="section-heading">
@@ -319,7 +348,7 @@ function conversionView(): string {
             <span class="format-label">输入格式</span>
             <div class="format-node">
               <strong>${sourceFormatSummary()}</strong>
-              <small>${files.length > 0 ? `${files.length} 个文件` : "JSON / JSONL"}</small>
+              <small>${inputBatches.length > 0 ? `${inputBatches.length} 个输入来源` : "JSON / JSONL"}</small>
             </div>
           </div>
           <span class="format-arrow"><i data-lucide="arrow-right-left" aria-hidden="true"></i></span>
@@ -387,7 +416,7 @@ function conversionView(): string {
           </div>
         </div>
         <dl class="summary-list">
-          <div><dt>已选文件</dt><dd>${files.length}</dd></div>
+          <div><dt>输入来源</dt><dd>${inputBatches.length}</dd></div>
           <div><dt>账号总数</dt><dd>${accountCount}</dd></div>
           <div><dt>输出文件</dt><dd id="summary-output-count">${hasFormError ? "-" : outputCount}</dd></div>
           <div><dt>下载类型</dt><dd id="summary-download-type">${hasFormError ? "待修正" : downloadType}</dd></div>
@@ -502,7 +531,7 @@ function privacyView(): string {
       <section class="privacy-lead">
         <span class="large-icon"><i data-lucide="shield-check" aria-hidden="true"></i></span>
         <h2>本地读取，本地生成</h2>
-        <p>上传控件只读取你主动选择的文件。解析、格式转换、拆分和 ZIP 生成均由本地 core 模块完成。</p>
+        <p>页面只读取你主动选择的文件或粘贴的内容。解析、格式转换、拆分和 ZIP 生成均由本地 core 模块完成。</p>
       </section>
       <section class="privacy-points" aria-label="隐私措施">
         <div><i data-lucide="check" aria-hidden="true"></i><span><strong>无上传接口</strong>页面代码不使用 fetch、XMLHttpRequest 或表单上传。</span></div>
@@ -525,7 +554,9 @@ function render(): void {
   createIcons({ icons: iconSet });
 
   if (route === "convert") {
-    renderFileRows();
+    renderInputRows();
+    const pastedJSON = document.querySelector<HTMLTextAreaElement>("#pasted-json");
+    if (pastedJSON) pastedJSON.value = pastedDraft;
     createIcons({ icons: iconSet });
     bindConverterEvents();
   } else if (route === "api") {
@@ -542,26 +573,57 @@ function setStatus(message: string, kind: typeof statusKind = "neutral"): void {
   statusKind = kind;
 }
 
-function clearParsedData(): void {
+function parseFailureMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof AccountConverterError)) return fallback;
+  if (error.code === "empty_input") return "输入内容为空";
+  if (error.code === "no_accounts") return "没有识别到账号";
+  if (error.code === "unsupported_value") return "JSON 中包含无法识别的值";
+  if (error.code === "invalid_jsonl") {
+    const line = error.details?.line;
+    return typeof line === "number" ? `JSON 格式无效，请检查第 ${line} 行` : "JSON 格式无效";
+  }
+  return fallback;
+}
+
+function inputFormat(parsed: CanonicalAccount[]): SourceFormat | "mixed" {
+  const formats = new Set(parsed.map((account) => account.sourceFormat));
+  return formats.size === 1
+    ? (formats.values().next().value ?? "unknown")
+    : "mixed";
+}
+
+function rebuildAccounts(): void {
+  accounts = inputBatches
+    .flatMap((batch) => batch.accounts)
+    .map((account, index) => ({ ...account, ordinal: index + 1 }));
+}
+
+function totalInputBytes(): number {
+  return inputBatches.reduce((sum, batch) => sum + batch.byteSize, 0);
+}
+
+function clearInputData(): void {
   accounts = [];
-  parsedFiles = [];
+  inputBatches = [];
+  pastedDraft = "";
+  nextPasteNumber = 1;
 }
 
 function validateFiles(nextFiles: File[]): string | null {
-  if (nextFiles.length > MAX_FILES) return `单次最多选择 ${MAX_FILES} 个文件`;
+  const existingFileCount = inputBatches.filter((batch) => batch.kind === "file").length;
+  if (existingFileCount + nextFiles.length > MAX_FILES) return `单次最多选择 ${MAX_FILES} 个文件`;
   const invalid = nextFiles.find(
     (file) => !ACCEPTED_EXTENSIONS.some((extension) => file.name.toLowerCase().endsWith(extension)),
   );
   if (invalid) return `不支持的文件类型：${invalid.name}`;
-  const totalBytes = nextFiles.reduce((sum, file) => sum + file.size, 0);
+  const totalBytes = totalInputBytes() + nextFiles.reduce((sum, file) => sum + file.size, 0);
   if (totalBytes > MAX_TOTAL_BYTES) return "文件总大小不能超过 256 MB";
   return null;
 }
 
 async function loadFiles(nextFiles: File[]): Promise<void> {
   if (busy || nextFiles.length === 0) return;
-  const merged = [...files, ...nextFiles];
-  const validationError = validateFiles(merged);
+  const validationError = validateFiles(nextFiles);
   if (validationError) {
     setStatus(validationError, "error");
     render();
@@ -569,64 +631,94 @@ async function loadFiles(nextFiles: File[]): Promise<void> {
   }
 
   busy = true;
-  clearParsedData();
-  if (files.length === 0) batchTimestamp = formatBatchTimestamp(new Date());
-  files = merged;
+  if (inputBatches.length === 0) batchTimestamp = formatBatchTimestamp(new Date());
   setStatus("正在解析文件");
   render();
 
   try {
-    const batches = await Promise.all(
-      files.map(async (file) => {
+    const parsedBatches = await Promise.all(
+      nextFiles.map(async (file) => {
         const parsed = parseAccounts(await file.text());
-        const formats = new Set(parsed.map((account) => account.sourceFormat));
-        const format: SourceFormat | "mixed" =
-          formats.size === 1
-            ? (formats.values().next().value ?? "unknown")
-            : "mixed";
         return {
+          id: nextBatchId++,
+          kind: "file" as const,
           name: file.name,
+          byteSize: file.size,
           accounts: parsed,
-          format,
+          format: inputFormat(parsed),
         };
       }),
     );
-    accounts = batches
-      .flatMap((batch) => batch.accounts)
-      .map((account, index) => ({ ...account, ordinal: index + 1 }));
-    parsedFiles = batches.map((batch) => ({
-      name: batch.name,
-      accountCount: batch.accounts.length,
-      format: batch.format,
-    }));
+    inputBatches.push(...parsedBatches);
+    rebuildAccounts();
     setStatus(`已识别 ${accounts.length} 个账号`, "success");
   } catch (error) {
-    clearParsedData();
-    setStatus(error instanceof Error ? error.message : "文件解析失败", "error");
+    setStatus(parseFailureMessage(error, "文件解析失败"), "error");
   } finally {
     busy = false;
     render();
   }
 }
 
-function clearFiles(): void {
-  clearParsedData();
-  files = [];
-  batchTimestamp = formatBatchTimestamp(new Date());
-  setStatus("等待添加文件");
-  render();
-}
-
-function removeFile(index: number): void {
-  const nextFiles = files.filter((_, currentIndex) => currentIndex !== index);
-  clearParsedData();
-  files = [];
-  if (nextFiles.length === 0) {
-    setStatus("等待添加文件");
+async function addPastedJSON(): Promise<void> {
+  if (busy) return;
+  if (pastedDraft.trim() === "") {
+    setStatus("请先粘贴 JSON 内容", "error");
     render();
     return;
   }
-  void loadFiles(nextFiles);
+
+  const byteSize = new TextEncoder().encode(pastedDraft).byteLength;
+  if (totalInputBytes() + byteSize > MAX_TOTAL_BYTES) {
+    setStatus("输入内容总大小不能超过 256 MB", "error");
+    render();
+    return;
+  }
+
+  busy = true;
+  if (inputBatches.length === 0) batchTimestamp = formatBatchTimestamp(new Date());
+  setStatus("正在解析粘贴内容");
+  render();
+
+  try {
+    await Promise.resolve();
+    const parsed = parseAccounts(pastedDraft);
+    inputBatches.push({
+      id: nextBatchId++,
+      kind: "paste",
+      name: `粘贴内容 ${nextPasteNumber++}`,
+      byteSize,
+      accounts: parsed,
+      format: inputFormat(parsed),
+    });
+    pastedDraft = "";
+    rebuildAccounts();
+    setStatus(`已识别 ${accounts.length} 个账号`, "success");
+  } catch (error) {
+    setStatus(parseFailureMessage(error, "粘贴内容解析失败"), "error");
+  } finally {
+    busy = false;
+    render();
+  }
+}
+
+function clearInputs(): void {
+  clearInputData();
+  batchTimestamp = formatBatchTimestamp(new Date());
+  setStatus("等待添加账号");
+  render();
+}
+
+function removeInputBatch(id: number): void {
+  inputBatches = inputBatches.filter((batch) => batch.id !== id);
+  rebuildAccounts();
+  if (inputBatches.length === 0) {
+    batchTimestamp = formatBatchTimestamp(new Date());
+    setStatus("等待添加账号");
+  } else {
+    setStatus(`已识别 ${accounts.length} 个账号`, "success");
+  }
+  render();
 }
 
 function downloadBlob(blob: Blob, filename: string): void {
@@ -717,13 +809,24 @@ async function generateDownload(): Promise<void> {
 }
 
 function bindConverterEvents(): void {
+  document.querySelectorAll<HTMLButtonElement>("[data-input-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextMode = button.dataset.inputMode as InputMode;
+      if (nextMode === inputMode) return;
+      inputMode = nextMode;
+      render();
+      if (nextMode === "paste") {
+        document.querySelector<HTMLTextAreaElement>("#pasted-json")?.focus();
+      }
+    });
+  });
+
   const input = document.querySelector<HTMLInputElement>("#file-input");
   input?.addEventListener("change", () => {
     void loadFiles(Array.from(input.files ?? []));
     input.value = "";
   });
 
-  document.querySelector("#add-files")?.addEventListener("click", () => input?.click());
   const dropZone = document.querySelector<HTMLElement>("#drop-zone");
   dropZone?.addEventListener("dragover", (event) => {
     event.preventDefault();
@@ -736,10 +839,23 @@ function bindConverterEvents(): void {
     void loadFiles(Array.from(event.dataTransfer?.files ?? []));
   });
 
-  document.querySelector("#clear-files")?.addEventListener("click", clearFiles);
+  const pastedJSON = document.querySelector<HTMLTextAreaElement>("#pasted-json");
+  const parsePastedJSON = document.querySelector<HTMLButtonElement>("#parse-pasted-json");
+  pastedJSON?.addEventListener("input", () => {
+    pastedDraft = pastedJSON.value;
+    if (parsePastedJSON) parsePastedJSON.disabled = busy || pastedDraft.trim() === "";
+  });
+  pastedJSON?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || (!event.ctrlKey && !event.metaKey)) return;
+    event.preventDefault();
+    if (!parsePastedJSON?.disabled) void addPastedJSON();
+  });
+  parsePastedJSON?.addEventListener("click", () => void addPastedJSON());
+
+  document.querySelector("#clear-inputs")?.addEventListener("click", clearInputs);
   document.querySelector("#download-button")?.addEventListener("click", () => void generateDownload());
-  document.querySelectorAll<HTMLButtonElement>("[data-remove-index]").forEach((button) => {
-    button.addEventListener("click", () => removeFile(Number(button.dataset.removeIndex)));
+  document.querySelectorAll<HTMLButtonElement>("[data-remove-batch]").forEach((button) => {
+    button.addEventListener("click", () => removeInputBatch(Number(button.dataset.removeBatch)));
   });
 
   document.querySelectorAll<HTMLElement>("[data-field]").forEach((group) => {
@@ -797,7 +913,7 @@ function refreshCustomGroupingUI(): void {
   const downloadType = outputCount > 1 ? "ZIP" : "JSON";
   const previewName =
     accounts.length === 0
-      ? "添加文件后显示"
+      ? "添加账号后显示"
       : preview.error
         ? "请修正自定义分组"
         : outputFilename(
@@ -845,11 +961,11 @@ function bindCopyButtons(): void {
 
 window.addEventListener("hashchange", () => {
   if (getRoute() !== "convert") {
-    clearParsedData();
-    files = [];
+    clearInputData();
+    setStatus("等待添加账号");
   }
   render();
 });
-window.addEventListener("beforeunload", clearParsedData);
+window.addEventListener("beforeunload", clearInputData);
 
 render();
