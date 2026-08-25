@@ -1,6 +1,6 @@
 :root {
-  color: #182230;
-  background: #f5f7fa;
+  color: var(--text);
+  background: var(--canvas);
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -11,13 +11,60 @@
   --success-soft: #ecfdf3;
   --danger: #c2413a;
   --danger-soft: #fef3f2;
+  --warning: #92400e;
+  --warning-soft: #fffbeb;
+  --output-accent: #7c3aed;
+  --output-soft: #f5f3ff;
   --text: #182230;
+  --text-strong: #101828;
+  --text-secondary: #344054;
+  --text-tertiary: #475467;
+  --placeholder: #98a2b3;
   --muted: #667085;
+  --canvas: #f5f7fa;
   --border: #e1e6ec;
   --border-strong: #cbd5e1;
   --surface: #ffffff;
   --surface-subtle: #f8fafc;
+  --surface-muted: #f2f4f7;
+  --selected-surface: #ffffff;
+  --row-border: #edf0f3;
+  --input-background: #ffffff;
+  --disabled: #b9c2cc;
+  --success-ring: #dcfae6;
   --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.03);
+}
+
+:root[data-theme="dark"] {
+  --accent: #6ea8fe;
+  --accent-strong: #9bc1ff;
+  --accent-soft: #15253d;
+  --success: #48c78e;
+  --success-soft: #102b22;
+  --danger: #ff7b72;
+  --danger-soft: #351a1d;
+  --warning: #f2b84b;
+  --warning-soft: #302510;
+  --output-accent: #a99bff;
+  --output-soft: #251d3d;
+  --text: #e6edf3;
+  --text-strong: #f0f6fc;
+  --text-secondary: #c9d1d9;
+  --text-tertiary: #aab4c0;
+  --placeholder: #7d8996;
+  --muted: #8b98a7;
+  --canvas: #0b0f14;
+  --border: #29313a;
+  --border-strong: #3b4652;
+  --surface: #121820;
+  --surface-subtle: #171e27;
+  --surface-muted: #1d2631;
+  --selected-surface: #202a36;
+  --row-border: #252d36;
+  --input-background: #0e141b;
+  --disabled: #3b4652;
+  --success-ring: #173d30;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 12px 32px rgb(0 0 0 / 0.2);
 }
 
 * {
@@ -35,7 +82,8 @@ body {
   min-height: 100vh;
   margin: 0;
   color: var(--text);
-  background: #f5f7fa;
+  background: var(--canvas);
+  transition: color 160ms ease, background 160ms ease;
 }
 
 button,
@@ -86,7 +134,7 @@ svg {
   height: 100vh;
   padding: 22px 14px 18px;
   border-right: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -97,14 +145,46 @@ svg {
   min-width: 0;
 }
 
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .brand {
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 42px;
   padding: 0 8px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #111827;
+  color: var(--text-strong);
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  background: var(--surface-subtle);
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
 }
 
 .brand-mark {
@@ -158,15 +238,15 @@ svg {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #475467;
+  color: var(--text-tertiary);
   font-size: 14px;
   font-weight: 650;
   transition: color 160ms ease, background 160ms ease;
 }
 
 .nav-link:hover {
-  color: #1d2939;
-  background: #f2f4f7;
+  color: var(--text-strong);
+  background: var(--surface-muted);
 }
 
 .nav-link.is-active {
@@ -184,7 +264,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #475467;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
@@ -192,8 +272,8 @@ svg {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #22a06b;
-  box-shadow: 0 0 0 3px #dcfae6;
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-ring);
 }
 
 .repository-link {
@@ -204,8 +284,8 @@ svg {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #344054;
-  background: #ffffff;
+  color: var(--text-secondary);
+  background: var(--surface);
   font-size: 12px;
   font-weight: 650;
 }
@@ -267,7 +347,7 @@ svg {
 
 .page-header h1 {
   margin: 0;
-  color: #101828;
+  color: var(--text-strong);
   font-size: 28px;
   line-height: 1.3;
   font-weight: 750;
@@ -327,7 +407,7 @@ svg {
 .doc-title h2,
 .privacy-lead h2 {
   margin: 0;
-  color: #1d2939;
+  color: var(--text-strong);
   font-size: 16px;
   line-height: 1.45;
   font-weight: 700;
@@ -362,8 +442,8 @@ svg {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #475467;
-  background: #ffffff;
+  color: var(--text-tertiary);
+  background: var(--surface);
   font-size: 12px;
   font-weight: 650;
 }
@@ -388,7 +468,7 @@ svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #98a2b3;
+  color: var(--placeholder);
   background: transparent;
 }
 
@@ -424,19 +504,19 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  color: #667085;
+  color: var(--muted);
   background: transparent;
   font-size: 12px;
   font-weight: 650;
 }
 
 .input-methods button:hover {
-  color: #344054;
+  color: var(--text-secondary);
 }
 
 .input-methods button.is-selected {
   color: var(--accent-strong);
-  background: #ffffff;
+  background: var(--selected-surface);
   box-shadow: 0 1px 2px rgb(16 24 40 / 0.08);
 }
 
@@ -448,14 +528,14 @@ svg {
 .drop-zone {
   min-height: 164px;
   padding: 26px 20px;
-  border: 1px dashed #aab7c6;
+  border: 1px dashed var(--border-strong);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #344054;
-  background: #f8fafc;
+  color: var(--text-secondary);
+  background: var(--surface-subtle);
   text-align: center;
   cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease;
@@ -484,13 +564,13 @@ svg {
   width: 42px;
   height: 42px;
   margin-bottom: 11px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .drop-icon svg {
@@ -520,7 +600,7 @@ svg {
 .paste-panel > label {
   display: block;
   margin-bottom: 8px;
-  color: #344054;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
 }
@@ -534,15 +614,15 @@ svg {
   border-radius: 7px;
   display: block;
   resize: vertical;
-  color: #1d2939;
-  background: #ffffff;
+  color: var(--text);
+  background: var(--input-background);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   line-height: 1.6;
 }
 
 .paste-panel textarea::placeholder {
-  color: #98a2b3;
+  color: var(--placeholder);
 }
 
 .paste-panel textarea:disabled {
@@ -611,7 +691,7 @@ svg {
   grid-template-columns: 34px minmax(0, 1fr) 36px;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid #edf0f3;
+  border-bottom: 1px solid var(--row-border);
 }
 
 .file-row:last-child {
@@ -625,8 +705,8 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0f766e;
-  background: #ecfdf5;
+  color: var(--success);
+  background: var(--success-soft);
 }
 
 .file-icon svg {
@@ -648,7 +728,7 @@ svg {
 }
 
 .file-details strong {
-  color: #344054;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -660,7 +740,7 @@ svg {
 
 .empty-files {
   padding: 18px 0 2px;
-  color: #98a2b3;
+  color: var(--placeholder);
   font-size: 12px;
   text-align: center;
 }
@@ -688,7 +768,7 @@ svg {
 .custom-settings > label {
   display: block;
   margin-bottom: 8px;
-  color: #344054;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
 }
@@ -711,7 +791,7 @@ svg {
 }
 
 .format-node strong {
-  color: #1d2939;
+  color: var(--text-strong);
   font-size: 14px;
 }
 
@@ -750,8 +830,8 @@ svg {
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #667085;
-  background: #ffffff;
+  color: var(--muted);
+  background: var(--surface);
   text-align: left;
 }
 
@@ -778,7 +858,7 @@ svg {
 }
 
 .format-options button strong {
-  color: #344054;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -808,7 +888,7 @@ svg {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 3px;
-  background: #f2f4f7;
+  background: var(--surface-muted);
 }
 
 .segmented.is-three {
@@ -821,7 +901,7 @@ svg {
   padding: 0 8px;
   border: 0;
   border-radius: 5px;
-  color: #667085;
+  color: var(--muted);
   background: transparent;
   font-size: 12px;
   font-weight: 650;
@@ -829,12 +909,12 @@ svg {
 }
 
 .segmented button:hover {
-  color: #344054;
+  color: var(--text-secondary);
 }
 
 .segmented button.is-selected {
   color: var(--accent-strong);
-  background: #ffffff;
+  background: var(--selected-surface);
   box-shadow: 0 1px 2px rgb(16 24 40 / 0.08);
 }
 
@@ -850,8 +930,8 @@ svg {
   padding: 0 12px;
   border: 1px solid var(--border-strong);
   border-radius: 7px;
-  color: #1d2939;
-  background: #ffffff;
+  color: var(--text);
+  background: var(--input-background);
   font-size: 14px;
 }
 
@@ -870,9 +950,9 @@ svg {
 .custom-settings {
   grid-column: 1 / -1;
   padding: 14px;
-  border: 1px solid #dbe5f5;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: #f8fbff;
+  background: var(--surface-subtle);
 }
 
 .custom-settings > label {
@@ -889,13 +969,13 @@ svg {
 .quick-sizes button {
   min-height: 29px;
   padding: 0 8px;
-  border: 1px solid #cbdaf3;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   color: var(--accent-strong);
-  background: #ffffff;
+  background: var(--surface);
   font-size: 11px;
   font-weight: 650;
 }
@@ -913,7 +993,7 @@ svg {
 .group-preview {
   margin-top: 12px;
   padding-top: 11px;
-  border-top: 1px solid #dbe5f5;
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -937,13 +1017,13 @@ svg {
   min-width: 28px;
   height: 25px;
   padding: 0 7px;
-  border: 1px solid #c7d7f5;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--accent-strong);
-  background: #ffffff;
+  background: var(--surface);
   font-size: 11px;
   font-weight: 700;
 }
@@ -956,7 +1036,7 @@ svg {
 
 .custom-error {
   margin: 11px 0 0;
-  color: #b42318;
+  color: var(--danger);
   font-size: 11px;
 }
 
@@ -972,7 +1052,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 11px;
-  color: #64748b;
+  color: var(--muted);
   background: var(--surface-subtle);
 }
 
@@ -986,7 +1066,7 @@ svg {
 }
 
 .locked-rule strong {
-  color: #344054;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -1014,8 +1094,8 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7c3aed;
-  background: #f5f3ff;
+  color: var(--output-accent);
+  background: var(--output-soft);
 }
 
 .output-heading > div {
@@ -1029,7 +1109,7 @@ svg {
 }
 
 .output-heading strong {
-  color: #1d2939;
+  color: var(--text-strong);
   font-size: 15px;
 }
 
@@ -1056,18 +1136,18 @@ svg {
 }
 
 .summary-list dd {
-  color: #344054;
+  color: var(--text-secondary);
   font-weight: 650;
 }
 
 .filename-preview {
   margin: 8px 0 14px;
   padding: 10px;
-  border: 1px solid #e4e7ec;
+  border: 1px solid var(--border);
   border-radius: 6px;
   display: grid;
   gap: 5px;
-  background: #f8fafc;
+  background: var(--surface-subtle);
 }
 
 .filename-preview span {
@@ -1078,7 +1158,7 @@ svg {
 .filename-preview code {
   max-width: 100%;
   overflow: hidden;
-  color: #344054;
+  color: var(--text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
   line-height: 1.5;
@@ -1094,8 +1174,8 @@ svg {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #475467;
-  background: #f2f4f7;
+  color: var(--text-tertiary);
+  background: var(--surface-muted);
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -1106,11 +1186,11 @@ svg {
   height: 7px;
   border-radius: 50%;
   flex: 0 0 auto;
-  background: #98a2b3;
+  background: var(--placeholder);
 }
 
 .status-line.is-success {
-  color: #067647;
+  color: var(--success);
   background: var(--success-soft);
 }
 
@@ -1119,7 +1199,7 @@ svg {
 }
 
 .status-line.is-error {
-  color: #b42318;
+  color: var(--danger);
   background: var(--danger-soft);
 }
 
@@ -1150,9 +1230,9 @@ svg {
 }
 
 .primary-button:disabled {
-  border-color: #b9c2cc;
+  border-color: var(--disabled);
   color: #ffffff;
-  background: #b9c2cc;
+  background: var(--disabled);
   box-shadow: none;
 }
 
@@ -1203,7 +1283,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #475467;
+  color: var(--text-tertiary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -1307,7 +1387,7 @@ svg {
 
 .contract-table strong {
   overflow-wrap: anywhere;
-  color: #344054;
+  color: var(--text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
 }
@@ -1335,7 +1415,7 @@ svg {
 
 .filename-examples code {
   overflow-wrap: anywhere;
-  color: #344054;
+  color: var(--text-secondary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
   line-height: 1.5;
@@ -1344,12 +1424,12 @@ svg {
 .notice {
   margin-top: 16px;
   padding: 13px 14px;
-  border-left: 3px solid #d97706;
+  border-left: 3px solid var(--warning);
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  color: #92400e;
-  background: #fffbeb;
+  color: var(--warning);
+  background: var(--warning-soft);
 }
 
 .notice svg {
@@ -1435,7 +1515,7 @@ svg {
 .privacy-points strong {
   display: block;
   margin-bottom: 2px;
-  color: #344054;
+  color: var(--text-secondary);
   font-weight: 700;
 }
 

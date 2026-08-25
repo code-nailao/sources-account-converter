@@ -12,9 +12,11 @@ import {
   Github,
   Info,
   LockKeyhole,
+  Moon,
   Plus,
   RefreshCw,
   ShieldCheck,
+  Sun,
   Trash2,
   UploadCloud,
   createIcons,
@@ -43,6 +45,7 @@ import "./styles.css";
 
 type Route = "convert" | "api" | "privacy";
 type InputMode = "file" | "paste";
+type Theme = "light" | "dark";
 type InputBatch = {
   id: number;
   kind: InputMode;
@@ -59,6 +62,9 @@ const ACCEPTED_EXTENSIONS = [".json", ".jsonl", ".ndjson"];
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root");
 
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+let theme: Theme = systemTheme.matches ? "dark" : "light";
+let themeOverridden = false;
 let inputBatches: InputBatch[] = [];
 let accounts: CanonicalAccount[] = [];
 let inputMode: InputMode = "file";
@@ -85,9 +91,11 @@ const iconSet = {
   Github,
   Info,
   LockKeyhole,
+  Moon,
   Plus,
   RefreshCw,
   ShieldCheck,
+  Sun,
   Trash2,
   UploadCloud,
 };
@@ -109,14 +117,20 @@ function navLink(route: Route, label: string, icon: string): string {
 }
 
 function appShell(content: string): string {
+  const themeLabel = theme === "dark" ? "切换到日间模式" : "切换到夜间模式";
   return `
     <div class="workspace">
       <aside class="sidebar" aria-label="主导航">
         <div class="sidebar-top">
-          <a class="brand" href="#/convert" aria-label="Sub2API / CPA 转换与分号器首页">
-            <span class="brand-mark"><i data-lucide="refresh-cw" aria-hidden="true"></i></span>
-            <span class="brand-copy"><strong>Sub2API / CPA</strong><small>转换与分号器</small></span>
-          </a>
+          <div class="brand-row">
+            <a class="brand" href="#/convert" aria-label="Sub2API / CPA 转换与分号器首页">
+              <span class="brand-mark"><i data-lucide="refresh-cw" aria-hidden="true"></i></span>
+              <span class="brand-copy"><strong>Sub2API / CPA</strong><small>转换与分号器</small></span>
+            </a>
+            <button class="theme-toggle" id="theme-toggle" type="button" title="${themeLabel}" aria-label="${themeLabel}" aria-pressed="${theme === "dark"}">
+              <i data-lucide="${theme === "dark" ? "sun" : "moon"}" aria-hidden="true"></i>
+            </button>
+          </div>
           <nav>
             ${navLink("convert", "转换工具", "files")}
             ${navLink("api", "API / SDK", "code-2")}
@@ -552,6 +566,12 @@ function render(): void {
   const view = route === "api" ? apiView() : route === "privacy" ? privacyView() : conversionView();
   app!.innerHTML = appShell(view);
   createIcons({ icons: iconSet });
+  document.querySelector("#theme-toggle")?.addEventListener("click", () => {
+    themeOverridden = true;
+    theme = theme === "dark" ? "light" : "dark";
+    applyTheme();
+    render();
+  });
 
   if (route === "convert") {
     renderInputRows();
@@ -566,6 +586,15 @@ function render(): void {
     if (nodeCode) nodeCode.textContent = nodeSDKExample;
     bindCopyButtons();
   }
+}
+
+function applyTheme(): void {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
+    "content",
+    theme === "dark" ? "#0b0f14" : "#f5f7fa",
+  );
 }
 
 function setStatus(message: string, kind: typeof statusKind = "neutral"): void {
@@ -968,4 +997,12 @@ window.addEventListener("hashchange", () => {
 });
 window.addEventListener("beforeunload", clearInputData);
 
+systemTheme.addEventListener("change", (event) => {
+  if (themeOverridden) return;
+  theme = event.matches ? "dark" : "light";
+  applyTheme();
+  render();
+});
+
+applyTheme();
 render();
