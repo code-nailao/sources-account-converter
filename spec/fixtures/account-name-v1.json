@@ -1,0 +1,372 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "full email names for CPA conversion",
+      "input": {
+        "type": "codex",
+        "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+        "refresh_token": "synthetic-refresh-for-fixtures",
+        "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+        "account_id": "synthetic-account",
+        "email": "Synthetic.User+team@example.invalid"
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": {
+          "mode": "merge"
+        },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-1.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "Synthetic.User+team@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+                  "refresh_token": "synthetic-refresh-for-fixtures",
+                  "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+                  "chatgpt_account_id": "synthetic-account",
+                  "email": "Synthetic.User+team@example.invalid"
+                },
+                "extra": {
+                  "email": "Synthetic.User+team@example.invalid"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sub2API email precedence and no-email preservation",
+      "input": {
+        "exported_at": "2026-07-30T12:24:16Z",
+        "proxies": [
+          {
+            "id": 7,
+            "name": "preserved-proxy"
+          }
+        ],
+        "accounts": [
+          {
+            "name": "old-credential-name",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": {
+              "email": "  Credentials.User+tag@example.invalid  ",
+              "unknown_setting": {
+                "keep": true
+              }
+            },
+            "email": "top@example.invalid",
+            "extra": {
+              "email": "extra@example.invalid"
+            },
+            "custom_counter": 9007199254740991
+          },
+          {
+            "name": "old-top-name",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": {
+              "email": " \t "
+            },
+            "email": "Top.User@example.invalid",
+            "extra": {
+              "email": "extra@example.invalid"
+            }
+          },
+          {
+            "name": "old-extra-name",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": {
+              "email": 42
+            },
+            "email": " \n ",
+            "extra": {
+              "email": "Extra.User@example.invalid",
+              "unrelated": "preserved"
+            }
+          },
+          {
+            "name": "keep-without-email",
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": {
+              "email": ""
+            }
+          },
+          {
+            "platform": "openai",
+            "type": "oauth",
+            "credentials": {},
+            "extra": {
+              "email": null
+            }
+          }
+        ]
+      },
+      "options": {
+        "format": "sub2api",
+        "grouping": {
+          "mode": "merge"
+        },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-5.json",
+          "accountCount": 5,
+          "bundleIndex": 1,
+          "bundleCount": 1,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-30T12:24:16Z",
+            "proxies": [
+              {
+                "id": 7,
+                "name": "preserved-proxy"
+              }
+            ],
+            "accounts": [
+              {
+                "name": "Credentials.User+tag@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "email": "  Credentials.User+tag@example.invalid  ",
+                  "unknown_setting": {
+                    "keep": true
+                  }
+                },
+                "email": "top@example.invalid",
+                "extra": {
+                  "email": "extra@example.invalid"
+                },
+                "custom_counter": 9007199254740991
+              },
+              {
+                "name": "Top.User@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "email": " \t "
+                },
+                "email": "Top.User@example.invalid",
+                "extra": {
+                  "email": "extra@example.invalid"
+                }
+              },
+              {
+                "name": "Extra.User@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "email": 42
+                },
+                "email": " \n ",
+                "extra": {
+                  "email": "Extra.User@example.invalid",
+                  "unrelated": "preserved"
+                }
+              },
+              {
+                "name": "keep-without-email",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "email": ""
+                }
+              },
+              {
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {},
+                "extra": {
+                  "email": null
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "missing explicit email keeps sequence names even with JWT email",
+      "input": [
+        {
+          "type": "codex",
+          "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+          "refresh_token": "synthetic-refresh-for-fixtures",
+          "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+          "account_id": "synthetic-account"
+        },
+        {
+          "type": "codex",
+          "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+          "refresh_token": "synthetic-refresh-for-fixtures",
+          "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+          "account_id": "synthetic-account"
+        }
+      ],
+      "options": {
+        "format": "sub2api",
+        "grouping": {
+          "mode": "chunkSize",
+          "chunkSize": 1
+        },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-2-part-001-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "codex-account-001",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+                  "refresh_token": "synthetic-refresh-for-fixtures",
+                  "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+                  "chatgpt_account_id": "synthetic-account"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "filename": "accounts-20260731-181530-sub2api-2-part-002-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 2,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "codex-account-002",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+                  "refresh_token": "synthetic-refresh-for-fixtures",
+                  "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+                  "chatgpt_account_id": "synthetic-account"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "grouping preserves complete email names",
+      "input": [
+        {
+          "type": "codex",
+          "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+          "refresh_token": "synthetic-refresh-for-fixtures",
+          "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+          "account_id": "synthetic-account",
+          "email": "Synthetic.User+team@example.invalid"
+        },
+        {
+          "type": "codex",
+          "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+          "refresh_token": "synthetic-refresh-for-fixtures",
+          "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+          "account_id": "synthetic-account",
+          "email": "another@example.invalid"
+        }
+      ],
+      "options": {
+        "format": "sub2api",
+        "grouping": {
+          "mode": "chunkSize",
+          "chunkSize": 1
+        },
+        "timestamp": "2026-07-31T18:15:30+08:00"
+      },
+      "expected": [
+        {
+          "filename": "accounts-20260731-181530-sub2api-2-part-001-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 1,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "Synthetic.User+team@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+                  "refresh_token": "synthetic-refresh-for-fixtures",
+                  "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+                  "chatgpt_account_id": "synthetic-account",
+                  "email": "Synthetic.User+team@example.invalid"
+                },
+                "extra": {
+                  "email": "Synthetic.User+team@example.invalid"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "filename": "accounts-20260731-181530-sub2api-2-part-002-of-002.json",
+          "accountCount": 1,
+          "bundleIndex": 2,
+          "bundleCount": 2,
+          "format": "sub2api",
+          "json": {
+            "exported_at": "2026-07-31T18:15:30+08:00",
+            "proxies": [],
+            "accounts": [
+              {
+                "name": "another@example.invalid",
+                "platform": "openai",
+                "type": "oauth",
+                "credentials": {
+                  "access_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtYWNjZXNzIn0.c3ludGhldGlj",
+                  "refresh_token": "synthetic-refresh-for-fixtures",
+                  "id_token": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzeW50aGV0aWMtaWQiLCJlbWFpbCI6Imp3dC1vbmx5QGV4YW1wbGUuaW52YWxpZCJ9.c3ludGhldGlj",
+                  "chatgpt_account_id": "synthetic-account",
+                  "email": "another@example.invalid"
+                },
+                "extra": {
+                  "email": "another@example.invalid"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

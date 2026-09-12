@@ -100,6 +100,18 @@ describe("groupAccounts", () => {
 });
 
 describe("renderArtifacts", () => {
+  it("preserves the original account name when original output is requested", () => {
+    const original = subAccount(1);
+    const accounts = parseAccounts(original);
+    const [artifact] = renderArtifacts(accounts, {
+      format: "original",
+      grouping: { mode: "merge" },
+      generatedAt: "2026-07-31T00:00:00Z"
+    });
+    expect(JSON.parse(artifact!.content)).toEqual(original);
+    expect(accounts[0]?.original).toEqual(original);
+  });
+
   it("creates directly importable, merged Sub2API output and retains account fields", () => {
     const accounts = parseAccounts(JSON.stringify({ proxies: [], accounts: [subAccount(1), subAccount(2)] }));
     const [artifact] = renderArtifacts(accounts, {

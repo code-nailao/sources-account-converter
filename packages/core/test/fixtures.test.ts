@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import vectors from "./fixtures/contract-v1.json";
+import accountNameVectors from "../../../spec/fixtures/account-name-v1.json";
 import { parseAccounts, renderArtifacts } from "../src/index.js";
 import type { JsonValue, RenderOptions } from "../src/index.js";
 
@@ -15,14 +16,19 @@ interface ExpectedArtifact {
 interface ContractCase {
   name: string;
   input: JsonValue;
-  options: RenderOptions;
+  options: RenderOptions & { timestamp?: string };
   expected: ExpectedArtifact[];
 }
 
 describe("shared contract fixture vectors", () => {
-  for (const vector of vectors.cases as ContractCase[]) {
+  for (const vector of [...vectors.cases, ...accountNameVectors.cases] as ContractCase[]) {
     it(vector.name, () => {
-      const artifacts = renderArtifacts(parseAccounts(vector.input), vector.options);
+      const accounts = parseAccounts(vector.input);
+      const originals = structuredClone(accounts.map((account) => account.original));
+      const artifacts = renderArtifacts(accounts, {
+        ...vector.options,
+        ...(vector.options.timestamp ? { generatedAt: vector.options.timestamp } : {})
+      });
       expect(
         artifacts.map((artifact) => ({
           filename: artifact.filename,
@@ -33,6 +39,7 @@ describe("shared contract fixture vectors", () => {
           json: JSON.parse(artifact.content) as JsonValue
         }))
       ).toEqual(vector.expected);
+      expect(accounts.map((account) => account.original)).toEqual(originals);
     });
   }
 });
