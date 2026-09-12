@@ -66,7 +66,12 @@ function toCPA(account: CanonicalAccount): JsonObject {
 }
 
 function toSub2API(account: CanonicalAccount, outputOrdinal: number): JsonObject {
-  if (account.sourceFormat === "sub2api" && isObject(account.original.credentials)) return clone(account.original);
+  const emailName = account.oauth.email?.trim();
+  if (account.sourceFormat === "sub2api" && isObject(account.original.credentials)) {
+    const result = clone(account.original);
+    if (emailName) result.name = emailName;
+    return result;
+  }
   const oauth = requireCPAFields(account);
   const credentials: JsonObject = {
     access_token: oauth.accessToken,
@@ -78,7 +83,7 @@ function toSub2API(account: CanonicalAccount, outputOrdinal: number): JsonObject
   if (oauth.email) credentials.email = oauth.email;
   if (oauth.planType) credentials.plan_type = oauth.planType;
   return {
-    name: `codex-account-${String(outputOrdinal).padStart(3, "0")}`,
+    name: emailName || `codex-account-${String(outputOrdinal).padStart(3, "0")}`,
     platform: "openai",
     type: "oauth",
     credentials,

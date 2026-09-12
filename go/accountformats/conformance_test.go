@@ -38,7 +38,7 @@ type errorCase struct {
 }
 
 func TestContractFixtures(t *testing.T) {
-	fixture := loadContract(t)
+	fixture := loadContract(t, "contract-v1.json", "account-name-v1.json")
 	for _, testCase := range fixture.Cases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			artifacts, err := Convert(testCase.Input, testCase.Options)
@@ -165,17 +165,25 @@ func TestCredentialErrorsNeverContainValues(t *testing.T) {
 	}
 }
 
-func loadContract(t *testing.T) contract {
+func loadContract(t *testing.T, filenames ...string) contract {
 	t.Helper()
-	payload, err := os.ReadFile("../../spec/fixtures/contract-v1.json")
-	if err != nil {
-		t.Fatal(err)
+	if len(filenames) == 0 {
+		filenames = []string{"contract-v1.json"}
 	}
-	var fixture contract
-	if err := json.Unmarshal(payload, &fixture); err != nil {
-		t.Fatal(err)
+	var combined contract
+	for _, filename := range filenames {
+		payload, err := os.ReadFile("../../spec/fixtures/" + filename)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var fixture contract
+		if err := json.Unmarshal(payload, &fixture); err != nil {
+			t.Fatal(err)
+		}
+		combined.Cases = append(combined.Cases, fixture.Cases...)
+		combined.ErrorCases = append(combined.ErrorCases, fixture.ErrorCases...)
 	}
-	return fixture
+	return combined
 }
 
 func sameJSON(t *testing.T, left, right []byte) bool {

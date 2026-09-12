@@ -109,8 +109,21 @@ func renderCPA(groups [][]Account, total int, timestamp time.Time) ([]Artifact, 
 }
 
 func toSub2API(account Account) (json.RawMessage, error) {
+	emailName := strings.TrimSpace(account.OAuth.Email)
 	if account.SourceFormat == FormatSub2API {
-		return append(json.RawMessage(nil), account.Original...), nil
+		if emailName == "" {
+			return append(json.RawMessage(nil), account.Original...), nil
+		}
+		var original map[string]any
+		if err := decodeRawObject(account.Original, &original); err != nil || original == nil {
+			return nil, errorf("invalid_account", "account %d is not a JSON object", account.Ordinal)
+		}
+		original["name"] = emailName
+		raw, err := json.Marshal(original)
+		if err != nil {
+			return nil, errorf("render_failed", "could not render Sub2API account")
+		}
+		return raw, nil
 	}
 	missing := validateOAuth(account.OAuth)
 	if len(missing) > 0 {
@@ -131,8 +144,12 @@ func toSub2API(account Account) (json.RawMessage, error) {
 	if account.OAuth.PlanType != "" {
 		credentials["plan_type"] = account.OAuth.PlanType
 	}
+	name := emailName
+	if name == "" {
+		name = fmt.Sprintf("codex-account-%03d", account.Ordinal)
+	}
 	result := map[string]any{
-		"name":        fmt.Sprintf("codex-account-%03d", account.Ordinal),
+		"name":        name,
 		"platform":    "openai",
 		"type":        "oauth",
 		"credentials": credentials,

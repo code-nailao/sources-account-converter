@@ -4,6 +4,10 @@
 TypeScript core. It contains only synthetic credentials. None of the values can
 authenticate against a real service.
 
+`account-name-v1.json` is consumed directly by both implementations. It covers
+full-email Sub2API account names, existing email-field precedence, no-email
+fallbacks, field preservation, and unchanged identity-free artifact filenames.
+
 Consumers should:
 
 1. parse each `input` without changing account order;

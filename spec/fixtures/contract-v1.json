@@ -57,7 +57,7 @@
             "proxies": [{ "id": 7, "name": "proxy-seven" }],
             "accounts": [
               {
-                "name": "synthetic-team-account",
+                "name": "synthetic-1@example.invalid",
                 "platform": "openai",
                 "type": "oauth",
                 "plan_type": "team",
@@ -236,7 +236,7 @@
             "proxies": [],
             "accounts": [
               {
-                "name": "codex-account-001",
+                "name": "synthetic-3@example.invalid",
                 "platform": "openai",
                 "type": "oauth",
                 "credentials": {
